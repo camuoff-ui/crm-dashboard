@@ -1,7 +1,5 @@
 'use client'
 
-export const dynamic = 'force-dynamic'
-
 import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
@@ -19,16 +17,17 @@ export default function PipelinePage() {
   const [editing, setEditing] = useState<Deal | null>(null)
   const supabase = useMemo(() => createClient(), [])
 
-  async function load() {
-    const [{ data: dealsData }, { data: clientsData }] = await Promise.all([
-      supabase.from('deals').select('*, client:clients(*)').order('created_at'),
-      supabase.from('clients').select('*').order('name'),
-    ])
-    setDeals((dealsData as Deal[]) ?? [])
-    setClients(clientsData ?? [])
-  }
-
-  useEffect(() => { load() }, [])
+  useEffect(() => {
+    async function load() {
+      const [{ data: dealsData }, { data: clientsData }] = await Promise.all([
+        supabase.from('deals').select('*, client:clients(*)').order('created_at'),
+        supabase.from('clients').select('*').order('name'),
+      ])
+      setDeals((dealsData as Deal[]) ?? [])
+      setClients(clientsData ?? [])
+    }
+    load()
+  }, [supabase])
 
   async function handleStageChange(dealId: string, newStage: DealStage) {
     const prevDeals = deals
@@ -47,14 +46,24 @@ export default function PipelinePage() {
     }
     setDialogOpen(false)
     setEditing(null)
-    load()
+    const [{ data: dealsData }, { data: clientsData }] = await Promise.all([
+      supabase.from('deals').select('*, client:clients(*)').order('created_at'),
+      supabase.from('clients').select('*').order('name'),
+    ])
+    setDeals((dealsData as Deal[]) ?? [])
+    setClients(clientsData ?? [])
   }
 
   async function handleDelete(id: string) {
     if (!confirm('Remover este negócio?')) return
     const { error } = await supabase.from('deals').delete().eq('id', id)
     if (error) { alert('Erro ao remover negócio: ' + error.message); return }
-    load()
+    const [{ data: dealsData }, { data: clientsData }] = await Promise.all([
+      supabase.from('deals').select('*, client:clients(*)').order('created_at'),
+      supabase.from('clients').select('*').order('name'),
+    ])
+    setDeals((dealsData as Deal[]) ?? [])
+    setClients(clientsData ?? [])
   }
 
   function openEdit(deal: Deal) {
