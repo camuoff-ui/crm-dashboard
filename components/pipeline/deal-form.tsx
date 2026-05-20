@@ -21,7 +21,7 @@ export function DealForm({ clients, initial = {}, onSubmit, onCancel }: DealForm
     title: initial.title ?? '',
     value: initial.value != null ? String(initial.value) : '',
     stage: initial.stage ?? 'prospeccao' as DealStage,
-    client_id: initial.client_id ?? (clients[0]?.id ?? ''),
+    client_id: initial.client_id ?? '',
   })
 
   function handleSubmit(e: React.FormEvent) {
@@ -53,13 +53,17 @@ export function DealForm({ clients, initial = {}, onSubmit, onCancel }: DealForm
         />
       </div>
       <div className="space-y-2">
-        <Label htmlFor="df-client">Cliente</Label>
+        <Label htmlFor="df-client">Cliente *</Label>
         <select
           id="df-client"
           className="w-full border rounded-md px-3 py-2 text-sm bg-white"
           value={form.client_id}
           onChange={e => setForm(p => ({ ...p, client_id: e.target.value }))}
+          required
         >
+          <option value="" disabled>
+            {clients.length === 0 ? 'Carregando clientes...' : 'Selecione um cliente'}
+          </option>
           {clients.map(c => (
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
