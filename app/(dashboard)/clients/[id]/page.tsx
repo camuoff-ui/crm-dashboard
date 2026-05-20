@@ -39,7 +39,10 @@ export default function ClientDetailPage() {
       supabase.from('clients').select('*').eq('id', id).single(),
       supabase.from('activities').select('*').eq('client_id', id).order('due_date', { ascending: false }).order('created_at', { ascending: false }),
     ])
-    if (ce) { setNotFound(true); return }
+    if (ce) {
+      if (ce.code === 'PGRST116') { setNotFound(true); return }
+      alert('Erro ao carregar cliente: ' + ce.message); return
+    }
     if (ae) { alert('Erro ao carregar atividades: ' + ae.message); return }
     setClient(c)
     setActivities((a as Activity[]) ?? [])

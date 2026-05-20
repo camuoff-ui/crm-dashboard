@@ -28,7 +28,7 @@ export default function AgendaPage() {
       .eq('due_date', getToday())
       .eq('status', 'pending')
       .order('due_time', { ascending: true, nullsFirst: false })
-    if (error) { alert('Erro ao carregar agenda: ' + error.message); return }
+    if (error) { alert('Erro ao carregar agenda: ' + error.message); setLoading(false); return }
     setTasks((data as AgendaTask[]) ?? [])
     setLoading(false)
   }
