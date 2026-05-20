@@ -17,13 +17,15 @@ export default async function DashboardPage() {
   const activeDeals = deals?.filter(d => d.stage !== 'fechado') ?? []
   const pipelineValue = activeDeals.reduce((sum, d) => sum + Number(d.value), 0)
 
-  const now = new Date()
+  const BRT_OFFSET = -3 * 60
+  const nowUtc = new Date()
+  const nowBrt = new Date(nowUtc.getTime() + (BRT_OFFSET - nowUtc.getTimezoneOffset()) * 60000)
   const closedThisMonth = deals?.filter(d => {
     if (d.stage !== 'fechado') return false
-    const created = new Date(d.updated_at)
+    const updated = new Date(new Date(d.updated_at).getTime() + (BRT_OFFSET - nowUtc.getTimezoneOffset()) * 60000)
     return (
-      created.getMonth() === now.getMonth() &&
-      created.getFullYear() === now.getFullYear()
+      updated.getMonth() === nowBrt.getMonth() &&
+      updated.getFullYear() === nowBrt.getFullYear()
     )
   }).length ?? 0
 
@@ -39,7 +41,7 @@ export default async function DashboardPage() {
         <MetricCard
           title="Fechados no Mês"
           value={closedThisMonth}
-          description={now.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
+          description={nowBrt.toLocaleString('pt-BR', { month: 'long', year: 'numeric' })}
         />
       </div>
     </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Activity } from '@/lib/types'
@@ -18,7 +18,7 @@ function formatToday() {
 }
 
 export default function AgendaPage() {
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const [tasks, setTasks] = useState<AgendaTask[]>([])
   const [loading, setLoading] = useState(true)
 
