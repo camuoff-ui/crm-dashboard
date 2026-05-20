@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ClientsTable } from '@/components/clients/clients-table'
@@ -16,16 +16,15 @@ export default function ClientsPage() {
   const [editing, setEditing] = useState<Client | null>(null)
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    async function load() {
-      const { data } = await supabase
-        .from('clients')
-        .select('*')
-        .order('created_at', { ascending: false })
-      setClients(data ?? [])
-    }
-    load()
+  const load = useCallback(async () => {
+    const { data } = await supabase
+      .from('clients')
+      .select('*')
+      .order('created_at', { ascending: false })
+    setClients(data ?? [])
   }, [supabase])
+
+  useEffect(() => { load() }, [load])
 
   async function handleSubmit(data: ClientFormData) {
     if (editing) {
@@ -37,16 +36,14 @@ export default function ClientsPage() {
     }
     setDialogOpen(false)
     setEditing(null)
-    const { data: refreshedClients } = await supabase.from('clients').select('*').order('created_at', { ascending: false })
-    setClients(refreshedClients ?? [])
+    await load()
   }
 
   async function handleDelete(id: string) {
     if (!confirm('Remover este cliente? Os negócios vinculados também serão removidos.')) return
     const { error } = await supabase.from('clients').delete().eq('id', id)
     if (error) { alert('Erro ao remover cliente: ' + error.message); return }
-    const { data: refreshedClients } = await supabase.from('clients').select('*').order('created_at', { ascending: false })
-    setClients(refreshedClients ?? [])
+    await load()
   }
 
   function openEdit(client: Client) {

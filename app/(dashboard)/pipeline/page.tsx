@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { KanbanBoard } from '@/components/pipeline/kanban-board'
@@ -17,17 +17,16 @@ export default function PipelinePage() {
   const [editing, setEditing] = useState<Deal | null>(null)
   const supabase = useMemo(() => createClient(), [])
 
-  useEffect(() => {
-    async function load() {
-      const [{ data: dealsData }, { data: clientsData }] = await Promise.all([
-        supabase.from('deals').select('*, client:clients(*)').order('created_at'),
-        supabase.from('clients').select('*').order('name'),
-      ])
-      setDeals((dealsData as Deal[]) ?? [])
-      setClients(clientsData ?? [])
-    }
-    load()
+  const load = useCallback(async () => {
+    const [{ data: dealsData }, { data: clientsData }] = await Promise.all([
+      supabase.from('deals').select('*, client:clients(*)').order('created_at'),
+      supabase.from('clients').select('*').order('name'),
+    ])
+    setDeals((dealsData as Deal[]) ?? [])
+    setClients(clientsData ?? [])
   }, [supabase])
+
+  useEffect(() => { load() }, [load])
 
   async function handleStageChange(dealId: string, newStage: DealStage) {
     const prevDeals = deals
@@ -46,24 +45,14 @@ export default function PipelinePage() {
     }
     setDialogOpen(false)
     setEditing(null)
-    const [{ data: dealsData }, { data: clientsData }] = await Promise.all([
-      supabase.from('deals').select('*, client:clients(*)').order('created_at'),
-      supabase.from('clients').select('*').order('name'),
-    ])
-    setDeals((dealsData as Deal[]) ?? [])
-    setClients(clientsData ?? [])
+    await load()
   }
 
   async function handleDelete(id: string) {
     if (!confirm('Remover este negócio?')) return
     const { error } = await supabase.from('deals').delete().eq('id', id)
     if (error) { alert('Erro ao remover negócio: ' + error.message); return }
-    const [{ data: dealsData }, { data: clientsData }] = await Promise.all([
-      supabase.from('deals').select('*, client:clients(*)').order('created_at'),
-      supabase.from('clients').select('*').order('name'),
-    ])
-    setDeals((dealsData as Deal[]) ?? [])
-    setClients(clientsData ?? [])
+    await load()
   }
 
   function openEdit(deal: Deal) {
