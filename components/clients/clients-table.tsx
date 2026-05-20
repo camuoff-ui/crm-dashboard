@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
@@ -29,7 +30,11 @@ export function ClientsTable({ clients, onEdit, onDelete }: ClientsTableProps) {
       <TableBody>
         {clients.map((client) => (
           <TableRow key={client.id}>
-            <TableCell className="font-medium">{client.name}</TableCell>
+            <TableCell className="font-medium">
+              <Link href={`/clients/${client.id}`} className="hover:underline text-blue-600">
+                {client.name}
+              </Link>
+            </TableCell>
             <TableCell>{client.company ?? '—'}</TableCell>
             <TableCell>{client.email ?? '—'}</TableCell>
             <TableCell>{client.phone ?? '—'}</TableCell>
