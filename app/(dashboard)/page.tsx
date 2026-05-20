@@ -17,12 +17,11 @@ export default async function DashboardPage() {
   const activeDeals = deals?.filter(d => d.stage !== 'fechado') ?? []
   const pipelineValue = activeDeals.reduce((sum, d) => sum + Number(d.value), 0)
 
-  const BRT_OFFSET = -3 * 60
-  const nowUtc = new Date()
-  const nowBrt = new Date(nowUtc.getTime() + (BRT_OFFSET - nowUtc.getTimezoneOffset()) * 60000)
+  const BRT_MS = 3 * 60 * 60 * 1000
+  const nowBrt = new Date(Date.now() - BRT_MS)
   const closedThisMonth = deals?.filter(d => {
     if (d.stage !== 'fechado') return false
-    const updated = new Date(new Date(d.updated_at).getTime() + (BRT_OFFSET - nowUtc.getTimezoneOffset()) * 60000)
+    const updated = new Date(new Date(d.updated_at).getTime() - BRT_MS)
     return (
       updated.getMonth() === nowBrt.getMonth() &&
       updated.getFullYear() === nowBrt.getFullYear()
