@@ -61,7 +61,7 @@ export default function PipelinePage() {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Pipeline de Vendas</h1>
-        <Button className="bg-blue-600 text-white hover:bg-blue-700" onClick={() => { setEditing(null); setDialogOpen(true) }}>+ Novo Negócio</Button>
+        <button style={{backgroundColor:'#2563eb',color:'white',padding:'8px 16px',borderRadius:'6px',cursor:'pointer',fontSize:'14px',fontWeight:'500',border:'none'}} onClick={() => { setEditing(null); setDialogOpen(true) }}>+ Novo Negócio</button>
       </div>
       <KanbanBoard
         deals={deals}
