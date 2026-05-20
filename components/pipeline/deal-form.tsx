@@ -17,16 +17,17 @@ interface DealFormProps {
 }
 
 export function DealForm({ clients, initial = {}, onSubmit, onCancel }: DealFormProps) {
-  const [form, setForm] = useState<DealFormData>({
+  const [form, setForm] = useState({
     title: initial.title ?? '',
-    value: initial.value ?? 0,
-    stage: initial.stage ?? 'prospeccao',
+    value: initial.value != null ? String(initial.value) : '',
+    stage: initial.stage ?? 'prospeccao' as DealStage,
     client_id: initial.client_id ?? (clients[0]?.id ?? ''),
   })
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    onSubmit({ ...form, value: Number(form.value) })
+    const numValue = parseFloat(form.value.replace(',', '.')) || 0
+    onSubmit({ ...form, value: numValue })
   }
 
   return (
@@ -44,11 +45,11 @@ export function DealForm({ clients, initial = {}, onSubmit, onCancel }: DealForm
         <Label htmlFor="df-value">Valor (R$)</Label>
         <Input
           id="df-value"
-          type="number"
-          min="0"
-          step="0.01"
+          type="text"
+          inputMode="decimal"
+          placeholder="0,00"
           value={form.value}
-          onChange={e => setForm(p => ({ ...p, value: Number(e.target.value) }))}
+          onChange={e => setForm(p => ({ ...p, value: e.target.value }))}
         />
       </div>
       <div className="space-y-2">

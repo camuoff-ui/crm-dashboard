@@ -10,7 +10,7 @@ export const DEAL_STAGES: DealStage[] = [
 
 export const STAGE_LABELS: Record<DealStage, string> = {
   prospeccao: 'Prospecção',
-  qualificacao: 'Qualificação',
+  qualificacao: 'Agendamento',
   proposta: 'Proposta',
   negociacao: 'Negociação',
   fechado: 'Fechado',
