@@ -6,6 +6,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Client, Activity, ActivityType } from '@/lib/types'
 import { ACTIVITY_TYPE_LABELS } from '@/lib/types'
+import { getToday, formatDate } from '@/lib/date-utils'
 
 const ACTIONS: { type: ActivityType; label: string; color: string }[] = [
   { type: 'ligar', label: '📞 Ligar', color: '#2563eb' },
@@ -13,16 +14,6 @@ const ACTIONS: { type: ActivityType; label: string; color: string }[] = [
   { type: 'whatsapp', label: '💬 WhatsApp', color: '#15803d' },
   { type: 'ligar_mais_tarde', label: '🕐 Ligar mais pra frente', color: '#9333ea' },
 ]
-
-function getToday() {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
-function formatDate(d: string) {
-  const [y, m, day] = d.split('-')
-  return `${day}/${m}/${y}`
-}
 
 export default function ClientDetailPage() {
   const { id } = useParams<{ id: string }>()
