@@ -38,8 +38,12 @@ export default function ClientDetailPage() {
       if (ce.code === 'PGRST116') { setNotFound(true); return }
       alert('Erro ao carregar cliente: ' + ce.message); setLoadError(true); return
     }
-    if (ae) { alert('Erro ao carregar atividades: ' + ae.message); return }
     setClient(c)
+    if (ae) {
+      alert('Erro ao carregar atividades: ' + ae.message)
+      setActivities([])
+      return
+    }
     setActivities((a as Activity[]) ?? [])
   }
 

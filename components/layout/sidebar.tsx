@@ -20,7 +20,8 @@ export function Sidebar() {
 
   async function handleLogout() {
     const supabase = createClient()
-    await supabase.auth.signOut()
+    const { error } = await supabase.auth.signOut()
+    if (error) { alert('Erro ao sair: ' + error.message); return }
     router.push('/login')
   }
 
