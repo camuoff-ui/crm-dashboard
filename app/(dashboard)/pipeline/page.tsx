@@ -32,7 +32,12 @@ export default function PipelinePage() {
     const prevDeals = deals
     setDeals(prev => prev.map(d => d.id === dealId ? { ...d, stage: newStage } : d))
     const { error } = await supabase.from('deals').update({ stage: newStage }).eq('id', dealId)
-    if (error) { setDeals(prevDeals); alert('Erro ao mover negócio: ' + error.message) }
+    if (error) {
+      setDeals(prevDeals)
+      alert('Erro ao mover negócio: ' + error.message)
+      return
+    }
+    await load()
   }
 
   async function handleSubmit(data: DealFormData) {
