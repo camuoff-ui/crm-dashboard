@@ -6,7 +6,11 @@ import { createClient } from '@/lib/supabase/client'
 import type { Activity } from '@/lib/types'
 import { ACTIVITY_TYPE_LABELS } from '@/lib/types'
 
-const TODAY = new Date().toISOString().split('T')[0]
+type AgendaTask = Activity & { client: { id: string; name: string; phone: string | null } }
+
+function getToday() {
+  return new Date().toISOString().split('T')[0]
+}
 
 function formatToday() {
   return new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
@@ -14,27 +18,29 @@ function formatToday() {
 
 export default function AgendaPage() {
   const supabase = createClient()
-  const [tasks, setTasks] = useState<(Activity & { client: { id: string; name: string; phone: string | null } })[]>([])
+  const [tasks, setTasks] = useState<AgendaTask[]>([])
   const [loading, setLoading] = useState(true)
 
   async function load() {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('activities')
       .select('*, client:clients(id, name, phone)')
-      .eq('due_date', TODAY)
+      .eq('due_date', getToday())
       .eq('status', 'pending')
       .order('due_time', { ascending: true, nullsFirst: false })
-    setTasks((data as any) ?? [])
+    if (error) { alert('Erro ao carregar agenda: ' + error.message); return }
+    setTasks((data as AgendaTask[]) ?? [])
     setLoading(false)
   }
 
   useEffect(() => { load() }, [])
 
   async function handleDone(id: string) {
-    await supabase.from('activities').update({
+    const { error } = await supabase.from('activities').update({
       status: 'done',
       completed_at: new Date().toISOString(),
     }).eq('id', id)
+    if (error) { alert('Erro ao concluir tarefa: ' + error.message); return }
     load()
   }
 

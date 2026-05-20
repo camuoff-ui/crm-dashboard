@@ -12,8 +12,6 @@ interface DealCardProps {
 
 const fmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })
 
-const MONTHS = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro']
-
 export function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
   const [showWa, setShowWa] = useState(false)
   const [date, setDate] = useState('')
@@ -26,8 +24,9 @@ export function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
       return
     }
     const [year, month, day] = date.split('-')
-    const monthName = MONTHS[parseInt(month) - 1]
-    const msg = `Sua Consulta com o Instituto Perdiza & Carvalho foi agendado para o dia ${parseInt(day)} de ${monthName} de ${year} e o horário da consulta ${time}. Pedimos que chegue com 20 minutos de antecedência. Aguardamos você! Um excelente dia!`
+    const dateFormatted = new Date(Number(year), Number(month) - 1, Number(day))
+      .toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
+    const msg = `Sua consulta no Instituto Perdiza & Carvalho foi agendada para o dia ${dateFormatted} às ${time}. Pedimos que chegue com 20 minutos de antecedência. Aguardamos você! Um excelente dia!`
     window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank')
     setShowWa(false)
   }

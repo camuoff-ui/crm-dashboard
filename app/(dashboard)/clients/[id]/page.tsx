@@ -1,12 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Client, Activity, ActivityType } from '@/lib/types'
 import { ACTIVITY_TYPE_LABELS } from '@/lib/types'
-
-const TODAY = new Date().toISOString().split('T')[0]
 
 const ACTIONS: { type: ActivityType; label: string; color: string }[] = [
   { type: 'ligar', label: '📞 Ligar', color: '#2563eb' },
@@ -15,21 +14,33 @@ const ACTIONS: { type: ActivityType; label: string; color: string }[] = [
   { type: 'ligar_mais_tarde', label: '🕐 Ligar mais pra frente', color: '#9333ea' },
 ]
 
+function getToday() {
+  return new Date().toISOString().split('T')[0]
+}
+
+function formatDate(d: string) {
+  const [y, m, day] = d.split('-')
+  return `${day}/${m}/${y}`
+}
+
 export default function ClientDetailPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
   const supabase = createClient()
 
   const [client, setClient] = useState<Client | null>(null)
+  const [notFound, setNotFound] = useState(false)
   const [activities, setActivities] = useState<Activity[]>([])
   const [activeAction, setActiveAction] = useState<ActivityType | null>(null)
-  const [form, setForm] = useState({ date: TODAY, time: '', notes: '' })
+  const [form, setForm] = useState({ date: getToday(), time: '', notes: '' })
 
   async function load() {
-    const [{ data: c }, { data: a }] = await Promise.all([
+    const [{ data: c, error: ce }, { data: a, error: ae }] = await Promise.all([
       supabase.from('clients').select('*').eq('id', id).single(),
       supabase.from('activities').select('*').eq('client_id', id).order('due_date', { ascending: false }).order('created_at', { ascending: false }),
     ])
+    if (ce) { setNotFound(true); return }
+    if (ae) { alert('Erro ao carregar atividades: ' + ae.message); return }
     setClient(c)
     setActivities((a as Activity[]) ?? [])
   }
@@ -38,7 +49,7 @@ export default function ClientDetailPage() {
 
   async function handleAddActivity() {
     if (!activeAction) return
-    await supabase.from('activities').insert({
+    const { error } = await supabase.from('activities').insert({
       client_id: id,
       type: activeAction,
       notes: form.notes || null,
@@ -46,34 +57,43 @@ export default function ClientDetailPage() {
       due_time: form.time || null,
       status: 'pending',
     })
+    if (error) { alert('Erro ao salvar tarefa: ' + error.message); return }
     setActiveAction(null)
-    setForm({ date: TODAY, time: '', notes: '' })
+    setForm({ date: getToday(), time: '', notes: '' })
     load()
   }
 
   async function handleDone(activityId: string) {
-    await supabase.from('activities').update({
+    const { error } = await supabase.from('activities').update({
       status: 'done',
       completed_at: new Date().toISOString(),
     }).eq('id', activityId)
+    if (error) { alert('Erro ao concluir tarefa: ' + error.message); return }
     load()
   }
 
-  function formatDate(d: string) {
-    const [y, m, day] = d.split('-')
-    return `${day}/${m}/${y}`
-  }
+  if (notFound) return (
+    <div className="text-center py-16">
+      <p className="text-gray-500 mb-4">Cliente não encontrado.</p>
+      <Link href="/clients" className="text-blue-600 hover:underline text-sm">← Voltar para Clientes</Link>
+    </div>
+  )
 
-  if (!client) return <p className="text-gray-500">Carregando...</p>
+  if (!client) return <p className="text-gray-400">Carregando...</p>
 
   const pending = activities.filter(a => a.status === 'pending')
   const done = activities.filter(a => a.status === 'done')
 
   return (
     <div className="max-w-2xl">
-      <button onClick={() => router.back()} style={{fontSize:'13px',color:'#6b7280',marginBottom:'16px',background:'none',border:'none',cursor:'pointer'}}>
-        ← Voltar
-      </button>
+      <div className="mb-4 flex gap-3">
+        <button onClick={() => router.back()} style={{fontSize:'13px',color:'#6b7280',background:'none',border:'none',cursor:'pointer'}}>
+          ← Voltar
+        </button>
+        <Link href="/clients" style={{fontSize:'13px',color:'#6b7280',textDecoration:'none'}}>
+          Clientes
+        </Link>
+      </div>
 
       <div className="bg-white rounded-lg border p-6 mb-6">
         <h1 className="text-2xl font-bold mb-1">{client.name}</h1>
