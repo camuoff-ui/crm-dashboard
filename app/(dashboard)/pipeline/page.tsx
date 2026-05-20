@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { KanbanBoard } from '@/components/pipeline/kanban-board'
@@ -17,7 +17,7 @@ export default function PipelinePage() {
   const [clients, setClients] = useState<Client[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Deal | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   async function load() {
     const [{ data: dealsData }, { data: clientsData }] = await Promise.all([
@@ -31,15 +31,19 @@ export default function PipelinePage() {
   useEffect(() => { load() }, [])
 
   async function handleStageChange(dealId: string, newStage: DealStage) {
+    const prevDeals = deals
     setDeals(prev => prev.map(d => d.id === dealId ? { ...d, stage: newStage } : d))
-    await supabase.from('deals').update({ stage: newStage }).eq('id', dealId)
+    const { error } = await supabase.from('deals').update({ stage: newStage }).eq('id', dealId)
+    if (error) { setDeals(prevDeals); alert('Erro ao mover negócio: ' + error.message) }
   }
 
   async function handleSubmit(data: DealFormData) {
     if (editing) {
-      await supabase.from('deals').update(data).eq('id', editing.id)
+      const { error } = await supabase.from('deals').update(data).eq('id', editing.id)
+      if (error) { alert('Erro ao salvar negócio: ' + error.message); return }
     } else {
-      await supabase.from('deals').insert(data)
+      const { error } = await supabase.from('deals').insert(data)
+      if (error) { alert('Erro ao criar negócio: ' + error.message); return }
     }
     setDialogOpen(false)
     setEditing(null)
@@ -48,7 +52,8 @@ export default function PipelinePage() {
 
   async function handleDelete(id: string) {
     if (!confirm('Remover este negócio?')) return
-    await supabase.from('deals').delete().eq('id', id)
+    const { error } = await supabase.from('deals').delete().eq('id', id)
+    if (error) { alert('Erro ao remover negócio: ' + error.message); return }
     load()
   }
 
@@ -75,10 +80,11 @@ export default function PipelinePage() {
             <DialogTitle>{editing ? 'Editar Negócio' : 'Novo Negócio'}</DialogTitle>
           </DialogHeader>
           <DealForm
+            key={editing?.id ?? 'new'}
             clients={clients}
             initial={editing ?? {}}
             onSubmit={handleSubmit}
-            onCancel={() => setDialogOpen(false)}
+            onCancel={() => { setDialogOpen(false); setEditing(null) }}
           />
         </DialogContent>
       </Dialog>

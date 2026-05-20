@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ClientsTable } from '@/components/clients/clients-table'
@@ -16,7 +16,7 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editing, setEditing] = useState<Client | null>(null)
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
 
   async function load() {
     const { data } = await supabase
@@ -30,9 +30,11 @@ export default function ClientsPage() {
 
   async function handleSubmit(data: ClientFormData) {
     if (editing) {
-      await supabase.from('clients').update(data).eq('id', editing.id)
+      const { error } = await supabase.from('clients').update(data).eq('id', editing.id)
+      if (error) { alert('Erro ao salvar cliente: ' + error.message); return }
     } else {
-      await supabase.from('clients').insert(data)
+      const { error } = await supabase.from('clients').insert(data)
+      if (error) { alert('Erro ao criar cliente: ' + error.message); return }
     }
     setDialogOpen(false)
     setEditing(null)
@@ -41,7 +43,8 @@ export default function ClientsPage() {
 
   async function handleDelete(id: string) {
     if (!confirm('Remover este cliente? Os negócios vinculados também serão removidos.')) return
-    await supabase.from('clients').delete().eq('id', id)
+    const { error } = await supabase.from('clients').delete().eq('id', id)
+    if (error) { alert('Erro ao remover cliente: ' + error.message); return }
     load()
   }
 
@@ -70,9 +73,10 @@ export default function ClientsPage() {
             <DialogTitle>{editing ? 'Editar Cliente' : 'Novo Cliente'}</DialogTitle>
           </DialogHeader>
           <ClientForm
+            key={editing?.id ?? 'new'}
             initial={editing ?? {}}
             onSubmit={handleSubmit}
-            onCancel={() => setDialogOpen(false)}
+            onCancel={() => { setDialogOpen(false); setEditing(null) }}
           />
         </DialogContent>
       </Dialog>

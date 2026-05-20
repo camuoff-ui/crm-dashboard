@@ -15,7 +15,8 @@ const ACTIONS: { type: ActivityType; label: string; color: string }[] = [
 ]
 
 function getToday() {
-  return new Date().toISOString().split('T')[0]
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
 
 function formatDate(d: string) {
@@ -30,6 +31,7 @@ export default function ClientDetailPage() {
 
   const [client, setClient] = useState<Client | null>(null)
   const [notFound, setNotFound] = useState(false)
+  const [loadError, setLoadError] = useState(false)
   const [activities, setActivities] = useState<Activity[]>([])
   const [activeAction, setActiveAction] = useState<ActivityType | null>(null)
   const [form, setForm] = useState({ date: getToday(), time: '', notes: '' })
@@ -41,7 +43,7 @@ export default function ClientDetailPage() {
     ])
     if (ce) {
       if (ce.code === 'PGRST116') { setNotFound(true); return }
-      alert('Erro ao carregar cliente: ' + ce.message); return
+      alert('Erro ao carregar cliente: ' + ce.message); setLoadError(true); return
     }
     if (ae) { alert('Erro ao carregar atividades: ' + ae.message); return }
     setClient(c)
@@ -82,6 +84,13 @@ export default function ClientDetailPage() {
     </div>
   )
 
+  if (loadError) return (
+    <div className="text-center py-16">
+      <p className="text-gray-500 mb-4">Erro ao carregar cliente.</p>
+      <button onClick={() => { setLoadError(false); load() }} style={{color:'#2563eb',background:'none',border:'none',cursor:'pointer',fontSize:'14px'}}>Tentar novamente</button>
+    </div>
+  )
+
   if (!client) return <p className="text-gray-400">Carregando...</p>
 
   const pending = activities.filter(a => a.status === 'pending')
@@ -90,7 +99,7 @@ export default function ClientDetailPage() {
   return (
     <div className="max-w-2xl">
       <div className="mb-4 flex gap-3">
-        <button onClick={() => router.back()} style={{fontSize:'13px',color:'#6b7280',background:'none',border:'none',cursor:'pointer'}}>
+        <button onClick={() => window.history.length > 1 ? router.back() : router.push('/clients')} style={{fontSize:'13px',color:'#6b7280',background:'none',border:'none',cursor:'pointer'}}>
           ← Voltar
         </button>
         <Link href="/clients" style={{fontSize:'13px',color:'#6b7280',textDecoration:'none'}}>

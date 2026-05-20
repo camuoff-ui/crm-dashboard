@@ -11,7 +11,7 @@ export default async function DashboardPage() {
     { data: deals },
   ] = await Promise.all([
     supabase.from('clients').select('*', { count: 'exact', head: true }),
-    supabase.from('deals').select('value, stage, created_at'),
+    supabase.from('deals').select('value, stage, created_at, updated_at'),
   ])
 
   const activeDeals = deals?.filter(d => d.stage !== 'fechado') ?? []
@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   const now = new Date()
   const closedThisMonth = deals?.filter(d => {
     if (d.stage !== 'fechado') return false
-    const created = new Date(d.created_at)
+    const created = new Date(d.updated_at)
     return (
       created.getMonth() === now.getMonth() &&
       created.getFullYear() === now.getFullYear()

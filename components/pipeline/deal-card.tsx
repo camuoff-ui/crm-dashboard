@@ -17,7 +17,14 @@ export function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
   const [date, setDate] = useState('')
   const [time, setTime] = useState('')
 
+  function handleCancel() {
+    setShowWa(false)
+    setDate('')
+    setTime('')
+  }
+
   function sendWhatsApp() {
+    if (!date || !time) return
     const phone = deal.client?.phone?.replace(/\D/g, '')
     if (!phone) {
       alert('Este cliente não tem telefone cadastrado. Adicione o telefone no cadastro do cliente.')
@@ -26,9 +33,12 @@ export function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
     const [year, month, day] = date.split('-')
     const dateFormatted = new Date(Number(year), Number(month) - 1, Number(day))
       .toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })
-    const msg = `Sua consulta no Instituto Perdiza & Carvalho foi agendada para o dia ${dateFormatted} às ${time}. Pedimos que chegue com 20 minutos de antecedência. Aguardamos você! Um excelente dia!`
+    const timeFormatted = time.replace(':', 'h')
+    const msg = `Sua consulta no Instituto Perdiza & Carvalho foi agendada para o dia ${dateFormatted} às ${timeFormatted}. Pedimos que chegue com 20 minutos de antecedência. Aguardamos você! Um excelente dia!`
     window.open(`https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`, '_blank')
     setShowWa(false)
+    setDate('')
+    setTime('')
   }
 
   return (
@@ -55,21 +65,11 @@ export function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
           <p className="text-xs font-semibold text-gray-700">Enviar confirmação via WhatsApp</p>
           <div>
             <p className="text-xs text-gray-500 mb-1">Data da consulta</p>
-            <input
-              type="date"
-              value={date}
-              onChange={e => setDate(e.target.value)}
-              className="w-full border rounded px-2 py-1 text-xs"
-            />
+            <input type="date" value={date} onChange={e => setDate(e.target.value)} className="w-full border rounded px-2 py-1 text-xs" />
           </div>
           <div>
             <p className="text-xs text-gray-500 mb-1">Horário</p>
-            <input
-              type="time"
-              value={time}
-              onChange={e => setTime(e.target.value)}
-              className="w-full border rounded px-2 py-1 text-xs"
-            />
+            <input type="time" value={time} onChange={e => setTime(e.target.value)} className="w-full border rounded px-2 py-1 text-xs" />
           </div>
           <div className="flex gap-2">
             <button
@@ -79,10 +79,7 @@ export function DealCard({ deal, onEdit, onDelete }: DealCardProps) {
             >
               Enviar
             </button>
-            <button
-              onClick={() => setShowWa(false)}
-              style={{backgroundColor:'#f3f4f6', color:'#374151', padding:'4px 12px', borderRadius:'4px', fontSize:'12px', border:'none', cursor:'pointer'}}
-            >
+            <button onClick={handleCancel} style={{backgroundColor:'#f3f4f6', color:'#374151', padding:'4px 12px', borderRadius:'4px', fontSize:'12px', border:'none', cursor:'pointer'}}>
               Cancelar
             </button>
           </div>

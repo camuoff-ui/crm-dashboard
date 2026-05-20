@@ -26,7 +26,7 @@ export function DealForm({ clients, initial = {}, onSubmit, onCancel }: DealForm
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const numValue = parseFloat(form.value.replace(',', '.')) || 0
+    const numValue = parseFloat(form.value.replace(/\./g, '').replace(',', '.')) || 0
     onSubmit({ ...form, value: numValue })
   }
 
