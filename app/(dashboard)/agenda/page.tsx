@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Activity } from '@/lib/types'
 import { ACTIVITY_TYPE_LABELS } from '@/lib/types'
-import { getToday } from '@/lib/date-utils'
+import { getToday, formatToday } from '@/lib/date-utils'
 
 type AgendaTask = Activity & { client: { id: string; name: string; phone: string | null } }
 
@@ -40,9 +40,7 @@ export default function AgendaPage() {
   return (
     <div className="max-w-2xl">
       <h1 className="text-2xl font-bold mb-1">Agenda do Dia</h1>
-      <p className="text-gray-500 text-sm mb-6 capitalize">
-        {new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-      </p>
+      <p className="text-gray-500 text-sm mb-6 capitalize">{formatToday()}</p>
 
       {loading && <p className="text-gray-400">Carregando...</p>}
 
