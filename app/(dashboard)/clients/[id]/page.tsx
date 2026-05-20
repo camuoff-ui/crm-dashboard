@@ -26,6 +26,8 @@ export default function ClientDetailPage() {
   const [activities, setActivities] = useState<Activity[]>([])
   const [activeAction, setActiveAction] = useState<ActivityType | null>(null)
   const [form, setForm] = useState({ date: getToday(), time: '', notes: '' })
+  const [saving, setSaving] = useState(false)
+  const [completing, setCompleting] = useState<string | null>(null)
 
   async function load() {
     const [{ data: c, error: ce }, { data: a, error: ae }] = await Promise.all([
@@ -44,7 +46,8 @@ export default function ClientDetailPage() {
   useEffect(() => { load() }, [id])
 
   async function handleAddActivity() {
-    if (!activeAction) return
+    if (!activeAction || saving) return
+    setSaving(true)
     const { error } = await supabase.from('activities').insert({
       client_id: id,
       type: activeAction,
@@ -53,6 +56,7 @@ export default function ClientDetailPage() {
       due_time: form.time || null,
       status: 'pending',
     })
+    setSaving(false)
     if (error) { alert('Erro ao salvar tarefa: ' + error.message); return }
     setActiveAction(null)
     setForm({ date: getToday(), time: '', notes: '' })
@@ -60,10 +64,13 @@ export default function ClientDetailPage() {
   }
 
   async function handleDone(activityId: string) {
+    if (completing) return
+    setCompleting(activityId)
     const { error } = await supabase.from('activities').update({
       status: 'done',
       completed_at: new Date().toISOString(),
     }).eq('id', activityId)
+    setCompleting(null)
     if (error) { alert('Erro ao concluir tarefa: ' + error.message); return }
     load()
   }
@@ -148,8 +155,20 @@ export default function ClientDetailPage() {
               <input type="text" value={form.notes} onChange={e => setForm(p => ({ ...p, notes: e.target.value }))} placeholder="Ex: cliente pediu retorno após 15h" className="w-full border rounded px-2 py-1 text-sm" />
             </div>
             <div className="flex gap-2">
-              <button onClick={handleAddActivity} style={{backgroundColor:'#2563eb',color:'white',padding:'6px 16px',borderRadius:'6px',fontSize:'13px',border:'none',cursor:'pointer'}}>
-                Salvar tarefa
+              <button
+                onClick={handleAddActivity}
+                disabled={saving}
+                style={{
+                  backgroundColor: saving ? '#9ca3af' : '#2563eb',
+                  color: 'white',
+                  padding: '6px 16px',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  border: 'none',
+                  cursor: saving ? 'not-allowed' : 'pointer',
+                }}
+              >
+                {saving ? 'Salvando...' : 'Salvar tarefa'}
               </button>
               <button onClick={() => setActiveAction(null)} style={{backgroundColor:'#f3f4f6',color:'#374151',padding:'6px 16px',borderRadius:'6px',fontSize:'13px',border:'none',cursor:'pointer'}}>
                 Cancelar
@@ -172,8 +191,20 @@ export default function ClientDetailPage() {
                     {a.notes ? ` — ${a.notes}` : ''}
                   </p>
                 </div>
-                <button onClick={() => handleDone(a.id)} style={{backgroundColor:'#16a34a',color:'white',padding:'4px 12px',borderRadius:'4px',fontSize:'12px',border:'none',cursor:'pointer'}}>
-                  Concluído
+                <button
+                  onClick={() => handleDone(a.id)}
+                  disabled={completing === a.id}
+                  style={{
+                    backgroundColor: completing === a.id ? '#9ca3af' : '#16a34a',
+                    color: 'white',
+                    padding: '4px 12px',
+                    borderRadius: '4px',
+                    fontSize: '12px',
+                    border: 'none',
+                    cursor: completing === a.id ? 'not-allowed' : 'pointer',
+                  }}
+                >
+                  {completing === a.id ? '...' : 'Concluído'}
                 </button>
               </div>
             ))}

@@ -13,6 +13,7 @@ export default function AgendaPage() {
   const supabase = useMemo(() => createClient(), [])
   const [tasks, setTasks] = useState<AgendaTask[]>([])
   const [loading, setLoading] = useState(true)
+  const [completing, setCompleting] = useState<string | null>(null)
 
   async function load() {
     const { data, error } = await supabase
@@ -29,10 +30,13 @@ export default function AgendaPage() {
   useEffect(() => { load() }, [])
 
   async function handleDone(id: string) {
+    if (completing) return
+    setCompleting(id)
     const { error } = await supabase.from('activities').update({
       status: 'done',
       completed_at: new Date().toISOString(),
     }).eq('id', id)
+    setCompleting(null)
     if (error) { alert('Erro ao concluir tarefa: ' + error.message); return }
     load()
   }
@@ -71,9 +75,19 @@ export default function AgendaPage() {
               </div>
               <button
                 onClick={() => handleDone(task.id)}
-                style={{backgroundColor:'#16a34a',color:'white',padding:'6px 14px',borderRadius:'6px',fontSize:'13px',border:'none',cursor:'pointer',whiteSpace:'nowrap'}}
+                disabled={completing === task.id}
+                style={{
+                  backgroundColor: completing === task.id ? '#9ca3af' : '#16a34a',
+                  color: 'white',
+                  padding: '6px 14px',
+                  borderRadius: '6px',
+                  fontSize: '13px',
+                  border: 'none',
+                  cursor: completing === task.id ? 'not-allowed' : 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
               >
-                ✓ Concluído
+                {completing === task.id ? '...' : '✓ Concluído'}
               </button>
             </div>
           ))}
