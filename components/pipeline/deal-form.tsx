@@ -26,6 +26,7 @@ export function DealForm({ clients, initial = {}, onSubmit, onCancel }: DealForm
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!form.client_id) return  // placeholder selected — native validation should catch this, but guard programmatically too
     const numValue = parseFloat(form.value.replace(/\./g, '').replace(',', '.')) || 0
     onSubmit({ ...form, value: numValue })
   }

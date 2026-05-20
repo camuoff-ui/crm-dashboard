@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Activity } from '@/lib/types'
@@ -15,7 +15,7 @@ export default function AgendaPage() {
   const [loading, setLoading] = useState(true)
   const [completing, setCompleting] = useState<string | null>(null)
 
-  async function load() {
+  const load = useCallback(async () => {
     const { data, error } = await supabase
       .from('activities')
       .select('*, client:clients(id, name, phone)')
@@ -25,9 +25,9 @@ export default function AgendaPage() {
     if (error) { alert('Erro ao carregar agenda: ' + error.message); setLoading(false); return }
     setTasks((data as AgendaTask[]) ?? [])
     setLoading(false)
-  }
+  }, [supabase])
 
-  useEffect(() => { load() }, [])
+  useEffect(() => { load() }, [load])
 
   async function handleDone(id: string) {
     if (completing) return
@@ -38,7 +38,7 @@ export default function AgendaPage() {
     }).eq('id', id)
     setCompleting(null)
     if (error) { alert('Erro ao concluir tarefa: ' + error.message); return }
-    load()
+    await load()
   }
 
   return (
@@ -75,15 +75,15 @@ export default function AgendaPage() {
               </div>
               <button
                 onClick={() => handleDone(task.id)}
-                disabled={completing === task.id}
+                disabled={!!completing}
                 style={{
-                  backgroundColor: completing === task.id ? '#9ca3af' : '#16a34a',
+                  backgroundColor: completing ? '#9ca3af' : '#16a34a',
                   color: 'white',
                   padding: '6px 14px',
                   borderRadius: '6px',
                   fontSize: '13px',
                   border: 'none',
-                  cursor: completing === task.id ? 'not-allowed' : 'pointer',
+                  cursor: completing ? 'not-allowed' : 'pointer',
                   whiteSpace: 'nowrap',
                 }}
               >

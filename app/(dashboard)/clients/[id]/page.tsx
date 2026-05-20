@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -29,7 +29,7 @@ export default function ClientDetailPage() {
   const [saving, setSaving] = useState(false)
   const [completing, setCompleting] = useState<string | null>(null)
 
-  async function load() {
+  const load = useCallback(async () => {
     const [{ data: c, error: ce }, { data: a, error: ae }] = await Promise.all([
       supabase.from('clients').select('*').eq('id', id).single(),
       supabase.from('activities').select('*').eq('client_id', id).order('due_date', { ascending: false }).order('created_at', { ascending: false }),
@@ -45,9 +45,9 @@ export default function ClientDetailPage() {
       return
     }
     setActivities((a as Activity[]) ?? [])
-  }
+  }, [supabase, id])
 
-  useEffect(() => { load() }, [id])
+  useEffect(() => { load() }, [load])
 
   async function handleAddActivity() {
     if (!activeAction || saving) return
@@ -64,7 +64,7 @@ export default function ClientDetailPage() {
     if (error) { alert('Erro ao salvar tarefa: ' + error.message); return }
     setActiveAction(null)
     setForm({ date: getToday(), time: '', notes: '' })
-    load()
+    await load()
   }
 
   async function handleDone(activityId: string) {
@@ -76,7 +76,7 @@ export default function ClientDetailPage() {
     }).eq('id', activityId)
     setCompleting(null)
     if (error) { alert('Erro ao concluir tarefa: ' + error.message); return }
-    load()
+    await load()
   }
 
   if (notFound) return (
@@ -197,15 +197,15 @@ export default function ClientDetailPage() {
                 </div>
                 <button
                   onClick={() => handleDone(a.id)}
-                  disabled={completing === a.id}
+                  disabled={!!completing}
                   style={{
-                    backgroundColor: completing === a.id ? '#9ca3af' : '#16a34a',
+                    backgroundColor: completing ? '#9ca3af' : '#16a34a',
                     color: 'white',
                     padding: '4px 12px',
                     borderRadius: '4px',
                     fontSize: '12px',
                     border: 'none',
-                    cursor: completing === a.id ? 'not-allowed' : 'pointer',
+                    cursor: completing ? 'not-allowed' : 'pointer',
                   }}
                 >
                   {completing === a.id ? '...' : 'Concluído'}
